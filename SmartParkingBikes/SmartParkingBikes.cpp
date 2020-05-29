@@ -143,20 +143,11 @@ void add_rect(SquareGrid& grid, int x1, int y1, int x2, int y2) {
     }
 }
 
-SquareGrid make_diagram1() {
-    SquareGrid grid(30, 15);
-    add_rect(grid, 3, 3, 5, 12);
-    add_rect(grid, 13, 4, 15, 15);
-    add_rect(grid, 21, 0, 23, 7);
-    add_rect(grid, 23, 5, 26, 7);
-    return grid;
-}
-
 struct GridWithWeights : SquareGrid {
     std::unordered_set<GridLocation> map;
     GridWithWeights(int w, int h) : SquareGrid(w, h) {}
     double cost(GridLocation from_node, GridLocation to_node) const {
-        return map.find(to_node) != map.end() ? 1.875 : .57;
+        return map.find(to_node) != map.end() ? 1.875 : 1.14;
     }
 };
 
@@ -180,9 +171,6 @@ GridWithWeights make_diagram4() {
       L{0,24}, L{1,24},	L{2,24}, L{3,24}, L{4,24}, L{5,24},	L{6,24}, L{7,24}, L{8,24}, L{9,24},	L{10,24}, L{11,24},	L{12,24}, L{13,24},	L{14,24}, L{15,24},	L{16,24}, L{17,24},
       L{0,26}, L{1,26},	L{2,26}, L{3,26}, L{4,26}, L{5,26},	L{6,26}, L{7,26}, L{8,26}, L{9,26},	L{10,26}, L{11,26},	L{12,26}, L{13,26},	L{14,26}, L{15,26},	L{16,26}, L{17,26},
       L{0,28}, L{1,28},	L{2,28}, L{3,28}, L{4,28}, L{5,28},	L{6,28}, L{7,28}, L{8,28}, L{9,28},	L{10,28}, L{11,28},	L{12,28}, L{13,28},	L{14,28}, L{15,28},	L{16,28}, L{17,28},
-
-
-
 
     };
     return grid;
