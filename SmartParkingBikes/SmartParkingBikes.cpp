@@ -1,5 +1,5 @@
 // SmartParkingBikes.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
+
 #include <iomanip>
 #include <unordered_map>
 #include <unordered_set>
@@ -101,11 +101,14 @@ std::basic_iostream<char>::basic_ostream& operator<<(std::basic_iostream<char>::
 // the distances, or pass in a point_to map if you want to print
 // arrows that point to the parent location, or pass in a path vector
 // if you want to draw the path.
+
+double cost_in_time = 0;
 template<class Graph>
 void draw_grid(const Graph& graph, int field_width,
     std::unordered_map<GridLocation, double>* distances = nullptr,
     std::unordered_map<GridLocation, GridLocation>* point_to = nullptr,
     std::vector<GridLocation>* path = nullptr) {
+	int previous[] = { 1, 0 };
     for (int y = 0; y != graph.height; ++y) {
         for (int x = 0; x != graph.width; ++x) {
             GridLocation id{ x, y };
@@ -116,9 +119,19 @@ void draw_grid(const Graph& graph, int field_width,
             else if (point_to != nullptr && point_to->count(id)) {
                 GridLocation next = (*point_to)[id];
                 if (next.x == x + 1) { std::cout << "> "; }
-                else if (next.x == x - 1) { std::cout << "< "; }
-                else if (next.y == y + 1) { std::cout << "v "; }
-                else if (next.y == y - 1) { std::cout << "^ "; }
+				else if (next.x == x - 1) { std::cout << "< "; }
+				else if (next.y == y + 1) { std::cout << "v "; }
+                else if (next.y == y - 1) { 
+					std::cout << "^ "; 
+					if (previous[0] == id.x - 1 || previous[0] == id.x + 1) {
+						cost_in_time += 1.875;
+						previous[0] = id.x;
+					}
+					if (previous[1] == id.y - 1 || previous[1] == id.y + 1) {
+						cost_in_time += 1.14;
+						previous[1] = id.y;
+					}
+				}
                 else { std::cout << "* "; }
             }
             else if (distances != nullptr && distances->count(id)) {
@@ -151,7 +164,7 @@ struct GridWithWeights : SquareGrid {
     }
 };
 
-GridWithWeights make_diagram4() {
+GridWithWeights make_diagram() {
     GridWithWeights grid(18, 15);
     //add_rect(grid, 1, 7, 4, 9);
     typedef GridLocation L;
@@ -206,7 +219,7 @@ void dijkstra_search
     std::unordered_map<Location, double>& cost_so_far)
 {
     PriorityQueue<Location, double> frontier;
-    frontier.put(start, 0);
+    frontier.put(start, heuristic(start, goal));
 
     came_from[start] = start;
     cost_so_far[start] = 0;
@@ -250,6 +263,8 @@ inline double heuristic(GridLocation a, GridLocation b) {
     return  (abs(a.x - b.x) + abs(a.y - b.y));
 }
 
+
+
 template<typename Location, typename Graph>
 void a_star_search
 (Graph graph,
@@ -259,26 +274,29 @@ void a_star_search
     std::unordered_map<Location, double>& cost_so_far)
 {
     PriorityQueue<Location, double> frontier;
-    frontier.put(start, 0);
+    frontier.put(start, heuristic(start, goal));
+
 
     came_from[start] = start;
     cost_so_far[start] = 0;
 
     while (!frontier.empty()) {
         Location current = frontier.get();
-
+		Location nextNode;
         if (current == goal) {
             break;
         }
 
         for (Location next : graph.neighbors(current)) {
             double new_cost = cost_so_far[current] + graph.cost(current, next);
+
             if (cost_so_far.find(next) == cost_so_far.end()
                 || new_cost < cost_so_far[next]) {
                 cost_so_far[next] = new_cost;
                 double priority = new_cost + heuristic(next, goal);
                 frontier.put(next, priority);
                 came_from[next] = current;
+				nextNode = next;
             }
         }
     }
@@ -288,43 +306,48 @@ void a_star_search
 int main()
 {
     int cabinNumber;
-    GridWithWeights grid = make_diagram4();
+    GridWithWeights grid = make_diagram();
     std::cout << "Which Cabin, 1 or 2?"  << std::endl;
     std::cin >> cabinNumber;
 
+    //Cabina uno borde esta en x = 9
     if (cabinNumber == 1) {
-        GridLocation start{ 0,0 };
-        GridLocation goal{ 8, 6 };
+        GridLocation start{ 1,0 };
+        GridLocation goal{ 9, 6 };
 
         std::unordered_map<GridLocation, GridLocation> came_from;
         std::unordered_map<GridLocation, double> cost_so_far;
         a_star_search(grid, start, goal, came_from, cost_so_far);
         draw_grid(grid, 3, nullptr, &came_from);
-        std::cout << '\n';
-        std::cout << '\n';
-        draw_grid(grid, 3, &cost_so_far, nullptr);
-        std::cout << '\n';
-        std::cout << '\n';
+       //std::cout << '\n';
+       //std::cout << '\n';
+       //draw_grid(grid, 3, &cost_so_far, nullptr);
+       std::cout << '\n';
+       std::cout << '\n';
         std::vector<GridLocation> path = reconstruct_path(start, goal, came_from);
         draw_grid(grid, 3, nullptr, nullptr, &path);
 
     }
-    else {
-        GridLocation start{ 18, 28 };
-        GridLocation goal{ 13, 22 };
+    //Cabina uno borde esta en x = 18
+    else if(cabinNumber == 2){
+		GridLocation start{ 16, 9 };
+		GridLocation goal{ 17, 14 };
 
-        std::unordered_map<GridLocation, GridLocation> came_from;
-        std::unordered_map<GridLocation, double> cost_so_far;
-        a_star_search(grid, start, goal, came_from, cost_so_far);
-        draw_grid(grid, 10, nullptr, &came_from);
-        std::cout << '\n';
-        std::cout << '\n';
-        draw_grid(grid, 10, &cost_so_far, nullptr);
-        std::cout << '\n';
-        std::cout << '\n';
-        std::vector<GridLocation> path = reconstruct_path(start, goal, came_from);
-        draw_grid(grid, 10, nullptr, nullptr, &path);
+		std::unordered_map<GridLocation, GridLocation> came_from;
+		std::unordered_map<GridLocation, double> cost_so_far;
+		a_star_search(grid, start, goal, came_from, cost_so_far);
+		//draw_grid(grid, 3, nullptr, &came_from);
+		//std::cout << '\n';
+		//std::cout << '\n';
+		//draw_grid(grid, 3, &cost_so_far, nullptr);
+		std::cout << '\n';
+		std::cout << '\n';
+		std::vector<GridLocation> path = reconstruct_path(start, goal, came_from);
+		draw_grid(grid, 3, nullptr, nullptr, &path);
+	
     }
+
+	std::cout << cost_in_time << std::endl;
 
     system("PAUSE");
     return 0;
