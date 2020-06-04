@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
+#include <functional>
+#include <time.h>
 
 
 struct SimpleGraph {
@@ -102,13 +104,16 @@ std::basic_iostream<char>::basic_ostream& operator<<(std::basic_iostream<char>::
 // arrows that point to the parent location, or pass in a path vector
 // if you want to draw the path.
 
+GridLocation goal;
+
 double cost_in_time = 0;
 template<class Graph>
 void draw_grid(const Graph& graph, int field_width,
     std::unordered_map<GridLocation, double>* distances = nullptr,
     std::unordered_map<GridLocation, GridLocation>* point_to = nullptr,
     std::vector<GridLocation>* path = nullptr) {
-	int previous[] = { 1, 0 };
+	GridLocation previous = goal;
+    
     for (int y = 0; y != graph.height; ++y) {
         for (int x = 0; x != graph.width; ++x) {
             GridLocation id{ x, y };
@@ -121,27 +126,27 @@ void draw_grid(const Graph& graph, int field_width,
                 if (next.x == x + 1) { std::cout << "> "; }
 				else if (next.x == x - 1) { std::cout << "< "; }
 				else if (next.y == y + 1) { std::cout << "v "; }
-                else if (next.y == y - 1) { 
-					std::cout << "^ "; 
-					if (previous[0] == id.x - 1 || previous[0] == id.x + 1) {
-						cost_in_time += 1.875;
-						previous[0] = id.x;
-					}
-					if (previous[1] == id.y - 1 || previous[1] == id.y + 1) {
-						cost_in_time += 1.14;
-						previous[1] = id.y;
-					}
-				}
+                else if (next.y == y - 1) { std::cout << "^ "; }
                 else { std::cout << "* "; }
             }
             else if (distances != nullptr && distances->count(id)) {
                 std::cout << (*distances)[id];
             }
             else if (path != nullptr && find(path->begin(), path->end(), id) != path->end()) {
-                std::cout << '@';
+               if (previous.x == id.x - 1 || previous.x == id.x + 1) {
+                    cost_in_time += 1.875;
+                    previous.x = id.x;
+                    std::cout << 'X';
+                }
+                if (previous.y == id.y - 1 || previous.y == id.y + 1) {
+                    cost_in_time += 1.14;
+                    previous.y = id.y;
+                    std::cout << 'Y';
+                }
+
             }
             else {
-                std::cout << 'O';
+                 std::cout << '.';
             }
         }
         std::cout << '\n';
@@ -166,26 +171,15 @@ struct GridWithWeights : SquareGrid {
 
 GridWithWeights make_diagram() {
     GridWithWeights grid(18, 15);
-    //add_rect(grid, 1, 7, 4, 9);
-    typedef GridLocation L;
-    grid.map = std::unordered_set<GridLocation>{
-      //L{0,0}, L{1,0}, L{2,0}, L{3,0}, L{4,0}, L{5,0}, L{6,0}, L{7,0}, L{8,0}, L{9,0}, L{10,0}, L{11,0}, L{2,0}, L{13,0}, L{14,0}, L{15,0}, L{16,0}, L{17,0},
-      //L{0,2}, L{1,2}, L{2,2}, L{3,2}, L{4,2}, L{5,2}, L{6,2}, L{7,2}, L{8,2}, L{9,2}, L{10,2}, L{11,2}, L{12,2}, L{13,2}, L{14,2}, L{15,2}, L{16,2}, L{17,2},
-      //L{0,4}, L{1,4}, L{2,4}, L{3,4}, L{4,4}, L{5,4}, L{6,4}, L{7,4}, L{8,4}, L{9,4}, L{10,4}, L{11,4}, L{12,4}, L{13,4}, L{14,4}, L{15,4}, L{16,4}, L{17,4},
-      //L{0,6}, L{1,6}, L{2,6}, L{3,6}, L{4,6}, L{5,6}, L{6,6}, L{7,6}, L{8,6}, L{9,6}, L{10,6}, L{11,6},	L{12,6}, L{13,6}, L{14,6}, L{15,6},	L{16,6}, L{17,6},
-      //L{0,8}, L{1,8}, L{2,8}, L{3,8}, L{4,8}, L{5,8}, L{6,8}, L{7,8}, L{8,8}, L{9,8}, L{10,8}, L{11,8}, L{12,8}, L{13,8}, L{14,8}, L{15,8}, L{16,8}, L{17,8},
-      //L{0,10}, L{1,10},	L{2,10}, L{3,10}, L{4,10}, L{5,10},	L{6,10}, L{7,10}, L{8,10}, L{9,10},	L{10,10}, L{11,10},	L{12,10}, L{13,10},	L{14,10}, L{15,10},	L{16,10}, L{17,10},
-      //L{0,12}, L{1,12},	L{2,12}, L{3,12}, L{4,12}, L{5,12},	L{6,12}, L{7,12}, L{8,12}, L{9,12},	L{10,12}, L{11,12},	L{12,12}, L{13,12},	L{14,12}, L{15,12},	L{16,12}, L{17,12},
-      //L{0,14}, L{1,14},	L{2,14}, L{3,14}, L{4,14}, L{5,14},	L{6,14}, L{7,14}, L{8,14}, L{9,14},	L{10,14}, L{11,14},	L{12,14}, L{13,14},	L{14,14}, L{15,14},	L{16,14}, L{17,14},
-      //L{0,16}, L{1,16},	L{2,16}, L{3,16}, L{4,16}, L{5,16},	L{6,16}, L{7,16}, L{8,16}, L{9,16},	L{10,16}, L{11,16},	L{12,16}, L{13,16},	L{14,16}, L{15,16},	L{16,16}, L{17,16},
-      //L{0,18}, L{1,18},	L{2,18}, L{3,18}, L{4,18}, L{5,18},	L{6,18}, L{7,18}, L{8,18}, L{9,18},	L{10,18}, L{11,18},	L{12,18}, L{13,18},	L{14,18}, L{15,18},	L{16,18}, L{17,18},
-      //L{0,20}, L{1,20},	L{2,20}, L{3,20}, L{4,20}, L{5,20},	L{6,20}, L{7,20}, L{8,20}, L{9,20},	L{10,20}, L{11,20},	L{12,20}, L{13,20},	L{14,20}, L{15,20},	L{16,20}, L{17,20},
-      //L{0,22}, L{1,22},	L{2,22}, L{3,22}, L{4,22}, L{5,22},	L{6,22}, L{7,22}, L{8,22}, L{9,22},	L{10,22}, L{11,22},	L{12,22}, L{13,22},	L{14,22}, L{15,22},	L{16,22}, L{17,22},
-      //L{0,24}, L{1,24},	L{2,24}, L{3,24}, L{4,24}, L{5,24},	L{6,24}, L{7,24}, L{8,24}, L{9,24},	L{10,24}, L{11,24},	L{12,24}, L{13,24},	L{14,24}, L{15,24},	L{16,24}, L{17,24},
-      //L{0,26}, L{1,26},	L{2,26}, L{3,26}, L{4,26}, L{5,26},	L{6,26}, L{7,26}, L{8,26}, L{9,26},	L{10,26}, L{11,26},	L{12,26}, L{13,26},	L{14,26}, L{15,26},	L{16,26}, L{17,26},
-      //L{0,28}, L{1,28},	L{2,28}, L{3,28}, L{4,28}, L{5,28},	L{6,28}, L{7,28}, L{8,28}, L{9,28},	L{10,28}, L{11,28},	L{12,28}, L{13,28},	L{14,28}, L{15,28},	L{16,28}, L{17,28},
+    //cabinas
+    add_rect(grid, 0, 0, 1, 2); 
+    add_rect(grid, 17, 13, 18, 15);
+    //rect grande
+    add_rect(grid, 13, 7, 18, 9);
+    //powerbanks
+    add_rect(grid, 7, 7, 8, 9);
+    add_rect(grid, 10, 7, 11, 9);
 
-    };
     return grid;
 }
 
@@ -210,39 +204,6 @@ struct PriorityQueue {
     }
 };
 
-template<typename Location, typename Graph>
-void dijkstra_search
-(Graph graph,
-    Location start,
-    Location goal,
-    std::unordered_map<Location, Location>& came_from,
-    std::unordered_map<Location, double>& cost_so_far)
-{
-    PriorityQueue<Location, double> frontier;
-    frontier.put(start, heuristic(start, goal));
-
-    came_from[start] = start;
-    cost_so_far[start] = 0;
-
-    while (!frontier.empty()) {
-        Location current = frontier.get();
-
-        if (current == goal) {
-            break;
-        }
-
-        for (Location next : graph.neighbors(current)) {
-            double new_cost = cost_so_far[current] + graph.cost(current, next);
-            if (cost_so_far.find(next) == cost_so_far.end()
-                || new_cost < cost_so_far[next]) {
-                cost_so_far[next] = new_cost;
-                came_from[next] = current;
-                frontier.put(next, new_cost);
-            }
-        }
-    }
-}
-
 template<typename Location>
 std::vector<Location> reconstruct_path(
     Location start, Location goal,
@@ -259,11 +220,11 @@ std::vector<Location> reconstruct_path(
     return path;
 }
 
+//costo estimado para llegar al goal
+
 inline double heuristic(GridLocation a, GridLocation b) {
     return  (abs(a.x - b.x) + abs(a.y - b.y));
 }
-
-
 
 template<typename Location, typename Graph>
 void a_star_search
@@ -274,33 +235,42 @@ void a_star_search
     std::unordered_map<Location, double>& cost_so_far)
 {
     PriorityQueue<Location, double> frontier;
+    std::vector<Location> neighbors;
     frontier.put(start, heuristic(start, goal));
-
 
     came_from[start] = start;
     cost_so_far[start] = 0;
 
     while (!frontier.empty()) {
         Location current = frontier.get();
-		Location nextNode;
         if (current == goal) {
             break;
         }
 
-        for (Location next : graph.neighbors(current)) {
+        //graph.neighbors(current)
+        neighbors = graph.neighbors(current);
+        for (Location next : neighbors) {
             double new_cost = cost_so_far[current] + graph.cost(current, next);
-
             if (cost_so_far.find(next) == cost_so_far.end()
                 || new_cost < cost_so_far[next]) {
                 cost_so_far[next] = new_cost;
                 double priority = new_cost + heuristic(next, goal);
                 frontier.put(next, priority);
                 came_from[next] = current;
-				nextNode = next;
             }
         }
     }
 }
+
+//swap casillas por espacio en blanco
+
+inline void swap(GridLocation& whiteSpace, GridLocation& casilla) {
+    GridLocation temp;
+    temp = whiteSpace;
+    whiteSpace = casilla;
+    casilla = temp;
+}
+
 
 
 int main()
@@ -312,31 +282,34 @@ int main()
 
     //Cabina uno borde esta en x = 9
     if (cabinNumber == 1) {
-        GridLocation start{ 1,0 };
-        GridLocation goal{ 9, 6 };
+        clock_t tStart = clock();
+        GridLocation start{ 9,12 };
+        goal = { 1, 0 };
 
         std::unordered_map<GridLocation, GridLocation> came_from;
         std::unordered_map<GridLocation, double> cost_so_far;
         a_star_search(grid, start, goal, came_from, cost_so_far);
         draw_grid(grid, 3, nullptr, &came_from);
-       //std::cout << '\n';
-       //std::cout << '\n';
-       //draw_grid(grid, 3, &cost_so_far, nullptr);
-       std::cout << '\n';
-       std::cout << '\n';
+        //std::cout << '\n';
+        //std::cout << '\n';
+        //draw_grid(grid, 3, &cost_so_far, nullptr);
+        std::cout << '\n';
+        std::cout << '\n';
         std::vector<GridLocation> path = reconstruct_path(start, goal, came_from);
         draw_grid(grid, 3, nullptr, nullptr, &path);
+        printf("Time taken: %.4fs \n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
     }
-    //Cabina uno borde esta en x = 18
+    //Cabina dos borde esta en x = 17
     else if(cabinNumber == 2){
-		GridLocation start{ 16, 9 };
-		GridLocation goal{ 17, 14 };
+        clock_t tStart = clock();
+		GridLocation start{ 16, 14 };
+		goal = { 10, 9 };
 
 		std::unordered_map<GridLocation, GridLocation> came_from;
 		std::unordered_map<GridLocation, double> cost_so_far;
 		a_star_search(grid, start, goal, came_from, cost_so_far);
-		//draw_grid(grid, 3, nullptr, &came_from);
+		draw_grid(grid, 3, nullptr, &came_from);
 		//std::cout << '\n';
 		//std::cout << '\n';
 		//draw_grid(grid, 3, &cost_so_far, nullptr);
@@ -344,10 +317,10 @@ int main()
 		std::cout << '\n';
 		std::vector<GridLocation> path = reconstruct_path(start, goal, came_from);
 		draw_grid(grid, 3, nullptr, nullptr, &path);
-	
+        printf("Time taken: %.4fs \n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
     }
 
-	std::cout << cost_in_time << std::endl;
+	std::cout <<  "The time it took: "<< cost_in_time << " sec." <<std::endl;
 
     system("PAUSE");
     return 0;
