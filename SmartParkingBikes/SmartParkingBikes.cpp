@@ -276,8 +276,26 @@ inline void calculateRoute(GridWithWeights grid, GridLocation start, GridLocatio
     a_star_search(grid, start, goal, came_from, cost_so_far);
 }
 
-inline void moveWhiteSpace(GridLocation& whiteSpace, GridLocation goal, ) {
+inline void moveWhiteSpace(GridLocation& whiteSpace, GridLocation& goal, std::vector<GridLocation> path) {
+    int penultimo = path.size() - 2;
+    //while( path[penultimo] != whiteSpace){
 
+    for(int i = 1; i < path.size() ; i++ ) {
+         swap(whiteSpace, path[i]);
+
+         if (whiteSpace.x != path[i].x)
+         {
+             cost_in_time += 1.875;
+         }
+         if (whiteSpace.y != path[i].y)
+         {
+             cost_in_time += 1.14;
+         }
+         // Imprimir la posicion del whitespace
+         std::cout << "x: " << whiteSpace.x << ", y: " << whiteSpace.y << std::endl;
+	}
+	//}
+    std::cout << whiteSpace.x << " " << whiteSpace.y << '\n';
 }
 
 
@@ -319,6 +337,9 @@ int main()
         std::cout << '\n';
         std::cout << '\n';
 
+        moveWhiteSpace(whiteSpace1, start, pathWhiteSpace);
+
+        /*
         //Calcular ruta de bici a cabina
         std::cout << "Camino bici a cabina";
         a_star_search(grid, start, goal, came_from, cost_so_far);
@@ -331,7 +352,7 @@ int main()
         std::vector<GridLocation> path = reconstruct_path(start, goal, came_from);
         draw_grid(grid, 3, nullptr, nullptr, &path);
         printf("Time taken: %.4fs \n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-
+        */
 
     }
     //Cabina dos borde esta en x = 17
@@ -361,6 +382,6 @@ int main()
 }
 
 
-/*  IDEAS >:( c:<
+/*  IDEAS >:( c:< 
 - Hacer la funcion para mover la bici recursiva hasta que se encuentre con una GridLocation que tenga el booleano isExit
 */
