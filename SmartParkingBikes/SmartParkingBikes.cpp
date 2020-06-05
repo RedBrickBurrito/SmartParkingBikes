@@ -321,11 +321,11 @@ void moveWhiteSpaceToFront(GridLocation& whiteSpace, GridLocation& goal, std::ve
 }
 
 void BicycleSpaceMovement(GridLocation& whiteSpace, GridLocation& bicycle, GridWithWeights& grid, std::vector<GridLocation> path) {
-    std::unordered_map < GridLocation, GridLocation> came_from;
-    std::unordered_map <GridLocation, double> cost_so_far;
 
     GridWithWeights tempGrid = grid;
-    for (int i = 1; i < path.size() - 1; i++) {
+    for (int i = 1; i < path.size(); i++) {
+        std::unordered_map < GridLocation, GridLocation> came_from;
+        std::unordered_map <GridLocation, double> cost_so_far;
         GridLocation bicycle_front{ path[i].x, path[i].y };
         std::cout <<"Bicycle_front position: " << bicycle_front.x << " " << bicycle_front.y << '\n';
         std::cout << "Bicycle position: " << bicycle.x << " " << bicycle.y << '\n';
@@ -340,8 +340,6 @@ void BicycleSpaceMovement(GridLocation& whiteSpace, GridLocation& bicycle, GridW
         moveWhiteSpaceToFront(whiteSpace, bicycle_front, pathWhiteSpace);
         swap(bicycle, whiteSpace);
 	}
-    int f;
-    std::cin >> f;
 }
 // SI SE PUEDE CABRONES
 
@@ -354,10 +352,14 @@ int main()
 
     GridLocation whiteSpace1{ 1, 0 };
     GridLocation whiteSpace2{ 16, 13 };
+    GridLocation start;
 
-
+    std::cout << "Input start x and y: ";
+    std::cin >> start.x;
+    std::cin >> start.y;
+    std::cout << '\n';
     //Cabina uno borde esta en x = 9
-    if (cabinNumber == 1) {
+    if (cabinNumber == 1) { 
         std::unordered_map<GridLocation, GridLocation> came_from;
         std::unordered_map<GridLocation, GridLocation> came_from_whitespace;
         std::unordered_map<GridLocation, double> cost_so_far;
@@ -365,13 +367,12 @@ int main()
 
         //Medir el tiempo
         clock_t tStart = clock();
-        GridLocation start{ 9,12 };
         goal = whiteSpace1;
 
         //Calcular ruta del whitespace a la bicicleta
         std::cout << "Camino espacio en blanco a bicicleta";
         calculateRoute(grid, whiteSpace1, start, came_from_whitespace, cost_so_far_whitespace);
-        draw_grid(grid, 3, nullptr, &came_from_whitespace);
+        //draw_grid(grid, 3, nullptr, &came_from_whitespace);
         std::cout << '\n';
         std::cout << '\n';
         int i;
@@ -400,7 +401,7 @@ int main()
         std::cout << '\n';
         std::cout << '\n';
         BicycleSpaceMovement(whiteSpace1, start, grid, path);
-        draw_grid(grid, 3, nullptr, &came_from);
+        //draw_grid(grid, 3, nullptr, &came_from);
         
         
         
@@ -445,6 +446,7 @@ int main()
     }
 
 	std::cout <<  "The time it took: "<< cost_in_time << " sec." <<std::endl;
+    std::cout << "Position of bicycle: " << start.x << " " << start.y << std::endl;
 
     system("PAUSE");
     return 0;
