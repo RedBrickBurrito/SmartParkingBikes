@@ -26,7 +26,6 @@ struct SimpleGraph {
 
 struct GridLocation {
     int x, y;
-    bool hasBicycle = false;
 };
 
 namespace std {
@@ -79,6 +78,7 @@ struct SquareGrid {
 };
 
 std::array<GridLocation, 4> SquareGrid::DIRS =
+//derecha, abajo, izquierda, arriba
 { GridLocation{1, 0}, GridLocation{0, -1}, GridLocation{-1, 0}, GridLocation{0, 1} };
 
 // Helpers for GridLocation
@@ -135,12 +135,10 @@ void draw_grid(const Graph& graph, int field_width,
             }
             else if (path != nullptr && find(path->begin(), path->end(), id) != path->end()) {
                if (previous.x == id.x - 1 || previous.x == id.x + 1) {
-                    cost_in_time += 1.875;
                     previous.x = id.x;
                     std::cout << 'X';
                 }
                 if (previous.y == id.y - 1 || previous.y == id.y + 1) {
-                    cost_in_time += 1.14;
                     previous.y = id.y;
                     std::cout << 'Y';
                 }
@@ -276,11 +274,11 @@ inline void calculateRoute(GridWithWeights grid, GridLocation start, GridLocatio
     a_star_search(grid, start, goal, came_from, cost_so_far);
 }
 
-inline void moveWhiteSpace(GridLocation& whiteSpace, GridLocation& goal, std::vector<GridLocation> path) {
+void moveWhiteSpace(GridLocation& whiteSpace, GridLocation& goal, std::vector<GridLocation> path) {
     int penultimo = path.size() - 2;
     //while( path[penultimo] != whiteSpace){
-
-    for(int i = 1; i < path.size() ; i++ ) {
+    std::cout << cost_in_time << std::endl;
+    for(int i = 1; i < path.size() - 1; i++ ) {
          swap(whiteSpace, path[i]);
 
          if (whiteSpace.x != path[i].x)
@@ -292,12 +290,30 @@ inline void moveWhiteSpace(GridLocation& whiteSpace, GridLocation& goal, std::ve
              cost_in_time += 1.14;
          }
          // Imprimir la posicion del whitespace
-         std::cout << "x: " << whiteSpace.x << ", y: " << whiteSpace.y << std::endl;
+         std::cout << "x: " << whiteSpace.x << ", y: " << whiteSpace.y << ", time: " << cost_in_time << '\n';
 	}
 	//}
     std::cout << whiteSpace.x << " " << whiteSpace.y << '\n';
 }
 
+void BicycleSpaceMovement(GridLocation& whiteSpace, GridLocation& bicycle, GridWithWeights& grid, std::vector<GridLocation> path) {
+    std::unordered_map < GridLocation, GridLocation> came_from;
+    std::unordered_map <GridLocation, double> cost_so_far;
+
+    GridWithWeights tempGrid = grid;
+    for(int i = 1; i < path.size()-1; i++) {
+        GridLocation bicycle_front{ path[i].x, path[i].y}; 
+        std::cout << bicycle_front.x << " " << bicycle_front.y << '\n';
+        add_rect(tempGrid, bicycle.x, bicycle.y, bicycle.x, bicycle.y +1);
+        calculateRoute(tempGrid, whiteSpace, bicycle_front, came_from, cost_so_far);
+        std::vector<GridLocation> pathWhiteSpace = reconstruct_path(whiteSpace, bicycle, came_from);
+        moveWhiteSpace(whiteSpace, bicycle_front, pathWhiteSpace);
+        swap(bicycle, whiteSpace);
+	}
+    int f;
+    std::cin >> f;
+}
+// SI SE PUEDE CABRONES
 
 int main()
 {
@@ -328,20 +344,43 @@ int main()
         draw_grid(grid, 3, nullptr, &came_from_whitespace);
         std::cout << '\n';
         std::cout << '\n';
+        int i;
+        std::cin >> i;
         //Buscar la salida para la bicicleta
         std::vector<GridLocation> pathWhiteSpace = reconstruct_path(whiteSpace1, start, came_from_whitespace);
         draw_grid(grid, 3, nullptr, nullptr, &pathWhiteSpace);
 
+        std::cin >> i;
+
         std::cout << '\n';
         std::cout << '\n';
+
+
         std::cout << '\n';
         std::cout << '\n';
 
         moveWhiteSpace(whiteSpace1, start, pathWhiteSpace);
 
-        /*
+        std::cin >> i;
+        
         //Calcular ruta de bici a cabina
-        std::cout << "Camino bici a cabina";
+        a_star_search(grid, start, goal, came_from, cost_so_far);
+        std::vector<GridLocation> path = reconstruct_path(start, goal, came_from);
+        draw_grid(grid, 3, nullptr, &came_from);
+        std::cout << '\n';
+        std::cout << '\n';
+        BicycleSpaceMovement(whiteSpace1, start, grid, path);
+        draw_grid(grid, 3, nullptr, &came_from);
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        /*std::cout << "Camino bici a cabina";
         a_star_search(grid, start, goal, came_from, cost_so_far);
         draw_grid(grid, 3, nullptr, &came_from);
         std::cout << '\n';
