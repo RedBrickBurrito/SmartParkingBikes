@@ -26,6 +26,7 @@ struct SimpleGraph {
 
 struct GridLocation {
     int x, y;
+    bool hasBicycle = false;
 };
 
 namespace std {
@@ -263,9 +264,14 @@ void a_star_search
 
 //swap casillas por espacio en blanco
 
+//arreglar swap
 inline void swap(GridLocation& whiteSpace, GridLocation& casilla) {
     GridLocation temp;
     temp = whiteSpace;
+    /*if (casilla.hasBicycle) {
+        temp.hasBicycle = true;
+        casilla.hasBicycle = false;
+    }*/
     whiteSpace = casilla;
     casilla = temp;
 }
@@ -274,13 +280,11 @@ inline void calculateRoute(GridWithWeights grid, GridLocation start, GridLocatio
     a_star_search(grid, start, goal, came_from, cost_so_far);
 }
 
-void moveWhiteSpace(GridLocation& whiteSpace, GridLocation& goal, std::vector<GridLocation> path) {
-    int penultimo = path.size() - 2;
+void moveWhiteSpaceToBicycle(GridLocation& whiteSpace, GridLocation& goal, std::vector<GridLocation> path) {
     //while( path[penultimo] != whiteSpace){
-    std::cout << cost_in_time << std::endl;
-    for(int i = 1; i < path.size() - 1; i++ ) {
-         swap(whiteSpace, path[i]);
-
+    //std::cout << cost_in_time << std::endl;
+    for(int i = 1; i < path.size() -1 ; i++ ) {
+        swap(whiteSpace, path[i]);
          if (whiteSpace.x != path[i].x)
          {
              cost_in_time += 1.875;
@@ -290,10 +294,30 @@ void moveWhiteSpace(GridLocation& whiteSpace, GridLocation& goal, std::vector<Gr
              cost_in_time += 1.14;
          }
          // Imprimir la posicion del whitespace
-         std::cout << "x: " << whiteSpace.x << ", y: " << whiteSpace.y << ", time: " << cost_in_time << '\n';
+         std::cout << "Whitespace position x: " << whiteSpace.x << ", y: " << whiteSpace.y << ", time: " << cost_in_time << '\n';
 	}
 	//}
-    std::cout << whiteSpace.x << " " << whiteSpace.y << '\n';
+    std::cout << "After movewhitespaceToBicycle: " << whiteSpace.x << " " << whiteSpace.y << '\n';
+}
+
+void moveWhiteSpaceToFront(GridLocation& whiteSpace, GridLocation& goal, std::vector<GridLocation> path) {
+    //while( path[penultimo] != whiteSpace){
+    //std::cout << cost_in_time << std::endl;
+    for (int i = 1; i < path.size(); i++) {
+        swap(whiteSpace, path[i]);
+        if (whiteSpace.x != path[i].x)
+        {
+            cost_in_time += 1.875;
+        }
+        if (whiteSpace.y != path[i].y)
+        {
+            cost_in_time += 1.14;
+        }
+        // Imprimir la posicion del whitespace
+        std::cout << "Whitespace position x: " << whiteSpace.x << ", y: " << whiteSpace.y << ", time: " << cost_in_time << '\n';
+    }
+    //}
+    std::cout << "After movewhitespaceToFront: " << whiteSpace.x << " " << whiteSpace.y << '\n';
 }
 
 void BicycleSpaceMovement(GridLocation& whiteSpace, GridLocation& bicycle, GridWithWeights& grid, std::vector<GridLocation> path) {
@@ -301,13 +325,19 @@ void BicycleSpaceMovement(GridLocation& whiteSpace, GridLocation& bicycle, GridW
     std::unordered_map <GridLocation, double> cost_so_far;
 
     GridWithWeights tempGrid = grid;
-    for(int i = 1; i < path.size()-1; i++) {
-        GridLocation bicycle_front{ path[i].x, path[i].y}; 
-        std::cout << bicycle_front.x << " " << bicycle_front.y << '\n';
-        add_rect(tempGrid, bicycle.x, bicycle.y, bicycle.x, bicycle.y +1);
+    for (int i = 1; i < path.size() - 1; i++) {
+        GridLocation bicycle_front{ path[i].x, path[i].y };
+        std::cout <<"Bicycle_front position: " << bicycle_front.x << " " << bicycle_front.y << '\n';
+        std::cout << "Bicycle position: " << bicycle.x << " " << bicycle.y << '\n';
+        
+        if (whiteSpace == path[i]) {
+            swap(bicycle, whiteSpace);
+            continue;
+        }
+        add_rect(tempGrid, bicycle.x, bicycle.y, bicycle.x + 1, bicycle.y + 1);
         calculateRoute(tempGrid, whiteSpace, bicycle_front, came_from, cost_so_far);
-        std::vector<GridLocation> pathWhiteSpace = reconstruct_path(whiteSpace, bicycle, came_from);
-        moveWhiteSpace(whiteSpace, bicycle_front, pathWhiteSpace);
+        std::vector<GridLocation> pathWhiteSpace = reconstruct_path(whiteSpace, bicycle_front, came_from);
+        moveWhiteSpaceToFront(whiteSpace, bicycle_front, pathWhiteSpace);
         swap(bicycle, whiteSpace);
 	}
     int f;
@@ -359,7 +389,7 @@ int main()
         std::cout << '\n';
         std::cout << '\n';
 
-        moveWhiteSpace(whiteSpace1, start, pathWhiteSpace);
+        moveWhiteSpaceToBicycle(whiteSpace1, start, pathWhiteSpace);
 
         std::cin >> i;
         
