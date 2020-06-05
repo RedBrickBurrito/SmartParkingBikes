@@ -26,6 +26,7 @@ struct SimpleGraph {
 
 struct GridLocation {
     int x, y;
+    bool hasBicycle = false;
 };
 
 namespace std {
@@ -262,10 +263,14 @@ void a_star_search
 }
 
 //swap casillas por espacio en blanco
-
+//arreglar swap
 inline void swap(GridLocation& whiteSpace, GridLocation& casilla) {
     GridLocation temp;
     temp = whiteSpace;
+    if (casilla.hasBicycle) {
+        temp.hasBicycle = true;
+        casilla.hasBicycle = false;
+    }
     whiteSpace = casilla;
     casilla = temp;
 }
@@ -275,11 +280,12 @@ inline void calculateRoute(GridWithWeights grid, GridLocation start, GridLocatio
 }
 
 void moveWhiteSpace(GridLocation& whiteSpace, GridLocation& goal, std::vector<GridLocation> path) {
-    int penultimo = path.size() - 2;
     //while( path[penultimo] != whiteSpace){
     std::cout << cost_in_time << std::endl;
-    for(int i = 1; i < path.size() - 1; i++ ) {
-         swap(whiteSpace, path[i]);
+    for(int i = 1; i < path.size() ; i++ ) {
+        if (!path[i].hasBicycle) {
+            swap(whiteSpace, path[i]);
+        }
 
          if (whiteSpace.x != path[i].x)
          {
@@ -301,10 +307,14 @@ void BicycleSpaceMovement(GridLocation& whiteSpace, GridLocation& bicycle, GridW
     std::unordered_map <GridLocation, double> cost_so_far;
 
     GridWithWeights tempGrid = grid;
-    for(int i = 1; i < path.size()-1; i++) {
-        GridLocation bicycle_front{ path[i].x, path[i].y}; 
+    for (int i = 1; i < path.size() - 1; i++) {
+        GridLocation bicycle_front{ path[i].x, path[i].y };
         std::cout << bicycle_front.x << " " << bicycle_front.y << '\n';
-        add_rect(tempGrid, bicycle.x, bicycle.y, bicycle.x, bicycle.y +1);
+        if (whiteSpace == path[i]) {
+            swap(bicycle, whiteSpace);
+            continue;
+        }
+        add_rect(tempGrid, bicycle.x, bicycle.y, bicycle.x + 1, bicycle.y + 1);
         calculateRoute(tempGrid, whiteSpace, bicycle_front, came_from, cost_so_far);
         std::vector<GridLocation> pathWhiteSpace = reconstruct_path(whiteSpace, bicycle, came_from);
         moveWhiteSpace(whiteSpace, bicycle_front, pathWhiteSpace);
@@ -335,7 +345,7 @@ int main()
 
         //Medir el tiempo
         clock_t tStart = clock();
-        GridLocation start{ 9,12 };
+        GridLocation start{ 9,12, true};
         goal = whiteSpace1;
 
         //Calcular ruta del whitespace a la bicicleta
