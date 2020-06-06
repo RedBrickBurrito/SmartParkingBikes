@@ -26,7 +26,6 @@ struct SimpleGraph {
 
 struct GridLocation {
     int x, y;
-    bool hasBicycle = false;
 };
 
 namespace std {
@@ -106,11 +105,11 @@ std::basic_iostream<char>::basic_ostream& operator<<(std::basic_iostream<char>::
 // arrows that point to the parent location, or pass in a path vector
 // if you want to draw the path.
 
-GridLocation goal;
+
 
 double cost_in_time = 0;
 template<class Graph>
-void draw_grid(const Graph& graph, int field_width,
+void draw_grid(const Graph& graph, int field_width, GridLocation goal,
     std::unordered_map<GridLocation, double>* distances = nullptr,
     std::unordered_map<GridLocation, GridLocation>* point_to = nullptr,
     std::vector<GridLocation>* path = nullptr) {
@@ -276,8 +275,66 @@ inline void swap(GridLocation& whiteSpace, GridLocation& casilla) {
     casilla = temp;
 }
 
-inline void calculateRoute(GridWithWeights grid, GridLocation start, GridLocation goal, std::unordered_map<GridLocation, GridLocation>& came_from, std::unordered_map<GridLocation, double>& cost_so_far) {
-    a_star_search(grid, start, goal, came_from, cost_so_far);
+std::vector<GridLocation> calculateRoute(GridWithWeights grid, GridLocation start, int cabin) {
+
+    GridLocation goal1;
+    GridLocation goal2;
+    GridLocation goal3;
+
+    if (cabin == 1)
+    {
+        goal1.x = 1;
+        goal1.y = 0;
+        goal2.x = 1;
+        goal2.y = 0;
+        goal3.x = 1;
+        goal3.y = 0;
+    }
+    else {
+        goal1.x = 17;
+        goal1.y = 12;
+        goal2.x = 16;
+        goal2.y = 13;
+        goal3.x = 16;
+        goal3.y = 14;
+    }
+    
+    //Calcular ruta de bici a cabina (1,0)
+    std::unordered_map<GridLocation, GridLocation> came_from1;
+    std::unordered_map<GridLocation, double> cost_so_far1;
+    a_star_search(grid, start, goal1, came_from1, cost_so_far1);
+    std::vector<GridLocation> path1 = reconstruct_path(start, goal1, came_from1);
+
+    //Calcular ruta de bici a cabina (1,0)
+    std::unordered_map<GridLocation, GridLocation> came_from2;
+    std::unordered_map<GridLocation, double> cost_so_far2;
+    a_star_search(grid, start, goal2, came_from2, cost_so_far2);
+    std::vector<GridLocation> path2 = reconstruct_path(start, goal2, came_from2);
+
+    //Calcular ruta de bici a cabina (1,0)
+    std::unordered_map<GridLocation, GridLocation> came_from3;
+    std::unordered_map<GridLocation, double> cost_so_far3;
+    a_star_search(grid, start, goal3, came_from3, cost_so_far3);
+    std::vector<GridLocation> path3 = reconstruct_path(start, goal3, came_from3);
+
+    //Comparar los 3 caminos y elegir el mas corto
+    if (path1.size() <= path2.size() && path1.size() <= path3.size())
+    {
+        draw_grid(grid, 3, goal1, nullptr, &came_from1 );
+        return path1;
+    }
+
+    if (path2.size() <= path1.size() && path2.size() <= path3.size())
+    {
+        draw_grid(grid, 3, goal2, nullptr, &came_from2);
+        return path2;
+    }
+    
+    if (path3.size() <= path1.size() && path3.size() <= path2.size())
+    {
+        draw_grid(grid, 3, goal3, nullptr, &came_from3);
+        return path3;
+    }
 }
 
 void moveWhiteSpaceToBicycle(GridLocation& whiteSpace, GridLocation& goal, std::vector<GridLocation> path) {
@@ -324,6 +381,13 @@ void BicycleSpaceMovement(GridLocation& whiteSpace, GridLocation& bicycle, GridW
 
     GridWithWeights tempGrid = grid;
     for (int i = 1; i < path.size(); i++) {
+
+        if ((bicycle.x == 1 && bicycle.y == 0)  || (bicycle.x == 1 && bicycle.y == 1) || (bicycle.x == 0 && bicycle.y == 2))
+            break;
+
+        if ((bicycle.x == 17 && bicycle.y == 12)  || (bicycle.x == 16 && bicycle.y == 13) || (bicycle.x == 16 && bicycle.y == 14))
+            break;
+
         std::unordered_map < GridLocation, GridLocation> came_from;
         std::unordered_map <GridLocation, double> cost_so_far;
         GridLocation bicycle_front{ path[i].x, path[i].y };
@@ -335,118 +399,137 @@ void BicycleSpaceMovement(GridLocation& whiteSpace, GridLocation& bicycle, GridW
             continue;
         }
         add_rect(tempGrid, bicycle.x, bicycle.y, bicycle.x + 1, bicycle.y + 1);
-        calculateRoute(tempGrid, whiteSpace, bicycle_front, came_from, cost_so_far);
+        a_star_search(tempGrid, whiteSpace, bicycle_front, came_from, cost_so_far);
         std::vector<GridLocation> pathWhiteSpace = reconstruct_path(whiteSpace, bicycle_front, came_from);
         moveWhiteSpaceToFront(whiteSpace, bicycle_front, pathWhiteSpace);
         swap(bicycle, whiteSpace);
 	}
 }
-// SI SE PUEDE CABRONES
+// SI SE PUEDE CABRONES YESSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
 
 int main()
 {
-    int cabinNumber;
     GridWithWeights grid = make_diagram();
-    std::cout << "Which Cabin, 1 or 2?"  << std::endl;
-    std::cin >> cabinNumber;
-
-    GridLocation whiteSpace1{ 1, 0 };
-    GridLocation whiteSpace2{ 16, 13 };
     GridLocation start;
 
-    std::cout << "Input start x and y: ";
-    std::cin >> start.x;
-    std::cin >> start.y;
-    std::cout << '\n';
-    //Cabina uno borde esta en x = 9
-    if (cabinNumber == 1) { 
-        std::unordered_map<GridLocation, GridLocation> came_from;
-        std::unordered_map<GridLocation, GridLocation> came_from_whitespace;
-        std::unordered_map<GridLocation, double> cost_so_far;
-        std::unordered_map<GridLocation, double> cost_so_far_whitespace;
+    char again;
+    bool repeat = true;
+    while (repeat)
+    {
+        bool pass = false;
+        while (!pass) {
+            std::cout << "Input start x: ";
+            std::cin >> start.x;
+            std::cout << "Input start y: ";
+            std::cin >> start.y;
+            std::cout << '\n';
+            if (start.x >= 0 && start.x <= 17) {
+                if (start.y >= 0 && start.y <= 14)
+                    pass = true;
+                else
+                    std::cout << "Invalid coordinates. Try AGAIN." << '\n';
+            }
+            else {
+                std::cout << "Invalid coordinates. Try AGAIN." << '\n';
+            }
+        }
 
-        //Medir el tiempo
-        clock_t tStart = clock();
-        goal = whiteSpace1;
+        //Cabina uno borde esta en x = 9
+        if (start.x <= 8) {
+            GridLocation whiteSpace{ 1, 0 };
+            int cabin = 1;
+            int i;
 
-        //Calcular ruta del whitespace a la bicicleta
-        std::cout << "Camino espacio en blanco a bicicleta";
-        calculateRoute(grid, whiteSpace1, start, came_from_whitespace, cost_so_far_whitespace);
-        //draw_grid(grid, 3, nullptr, &came_from_whitespace);
-        std::cout << '\n';
-        std::cout << '\n';
-        int i;
-        std::cin >> i;
-        //Buscar la salida para la bicicleta
-        std::vector<GridLocation> pathWhiteSpace = reconstruct_path(whiteSpace1, start, came_from_whitespace);
-        draw_grid(grid, 3, nullptr, nullptr, &pathWhiteSpace);
+            //Medir el tiempo
+            //clock_t tStart = clock();
 
-        std::cin >> i;
+            //Calcular ruta del whitespace a la bicicleta
+            std::cout << "Camino espacio en blanco a bicicleta \n";
 
-        std::cout << '\n';
-        std::cout << '\n';
+            //draw_grid(grid, 3, nullptr, &came_from_whitespace);
+            std::cout << '\n';
+            std::cout << '\n';
+
+            //Buscar la ruta del espacio en blanco a la bicicleta
+            std::unordered_map<GridLocation, GridLocation> came_from_whitespace;
+            std::unordered_map<GridLocation, double> cost_so_far_whitespace;
+            a_star_search(grid, whiteSpace, start, came_from_whitespace, cost_so_far_whitespace);
+            std::vector<GridLocation> pathWhiteSpace = reconstruct_path(whiteSpace, start, came_from_whitespace);
+            draw_grid(grid, 3, start, nullptr, nullptr, &pathWhiteSpace);
+
+            std::cin >> i;
+
+            std::cout << '\n';
+            std::cout << '\n';
+
+            moveWhiteSpaceToBicycle(whiteSpace, start, pathWhiteSpace);
+
+            std::cin >> i;
+
+            std::vector<GridLocation> path = calculateRoute(grid, start, cabin);
 
 
-        std::cout << '\n';
-        std::cout << '\n';
+            std::cout << '\n';
+            std::cout << '\n';
+            BicycleSpaceMovement(whiteSpace, start, grid, path);
+            //draw_grid(grid, 3, nullptr, &came_from);
+        }
 
-        moveWhiteSpaceToBicycle(whiteSpace1, start, pathWhiteSpace);
+        //Cabina dos borde esta en x = 17
+        else if (start.x >= 9) {
+            GridLocation whiteSpace{ 16, 13 };
+            int cabin = 2;
+            int i;
 
-        std::cin >> i;
-        
-        //Calcular ruta de bici a cabina
-        a_star_search(grid, start, goal, came_from, cost_so_far);
-        std::vector<GridLocation> path = reconstruct_path(start, goal, came_from);
-        draw_grid(grid, 3, nullptr, &came_from);
-        std::cout << '\n';
-        std::cout << '\n';
-        BicycleSpaceMovement(whiteSpace1, start, grid, path);
-        //draw_grid(grid, 3, nullptr, &came_from);
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        /*std::cout << "Camino bici a cabina";
-        a_star_search(grid, start, goal, came_from, cost_so_far);
-        draw_grid(grid, 3, nullptr, &came_from);
-        std::cout << '\n';
-        std::cout << '\n';
-        draw_grid(grid, 3, &cost_so_far, nullptr);
-        std::cout << '\n';
-        std::cout << '\n';
-        std::vector<GridLocation> path = reconstruct_path(start, goal, came_from);
-        draw_grid(grid, 3, nullptr, nullptr, &path);
-        printf("Time taken: %.4fs \n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-        */
+            //Medir el tiempo
+            //clock_t tStart = clock();
 
+            //Calcular ruta del whitespace a la bicicleta
+            std::cout << "Camino espacio en blanco a bicicleta \n";
+
+            //draw_grid(grid, 3, nullptr, &came_from_whitespace);
+            std::cout << '\n';
+            std::cout << '\n';
+
+            //Buscar la ruta del espacio en blanco a la bicicleta
+            std::unordered_map<GridLocation, GridLocation> came_from_whitespace;
+            std::unordered_map<GridLocation, double> cost_so_far_whitespace;
+            a_star_search(grid, whiteSpace, start, came_from_whitespace, cost_so_far_whitespace);
+            std::vector<GridLocation> pathWhiteSpace = reconstruct_path(whiteSpace, start, came_from_whitespace);
+            draw_grid(grid, 3, start, nullptr, nullptr, &pathWhiteSpace);
+
+            std::cin >> i;
+
+            std::cout << '\n';
+            std::cout << '\n';
+
+            moveWhiteSpaceToBicycle(whiteSpace, start, pathWhiteSpace);
+
+            std::cin >> i;
+
+            std::vector<GridLocation> path = calculateRoute(grid, start, cabin);
+
+
+            std::cout << '\n';
+            std::cout << '\n';
+            BicycleSpaceMovement(whiteSpace, start, grid, path);
+        }
+
+        std::cout << "The time it took: " << cost_in_time << " sec." << std::endl;
+        std::cout << "Position of bicycle: " << start.x << " " << start.y << std::endl;
+
+
+        std::cout << "Again? (y) yes : (n) no\n";
+        std::cin >> again;
+
+        if (again == 'n' || again == 'N') {
+            repeat = false;
+        }
+
+        cost_in_time = 0;
     }
-    //Cabina dos borde esta en x = 17
-    else if(cabinNumber == 2){
-        clock_t tStart = clock();
-		GridLocation start{ 16, 14 };
-		goal = { 10, 9 };
-        std::unordered_map<GridLocation, GridLocation> came_from;
-        std::unordered_map<GridLocation, GridLocation> came_from_whitespace;
-        std::unordered_map<GridLocation, double> cost_so_far;
-        std::unordered_map<GridLocation, double> cost_so_far_whitespace;
-		draw_grid(grid, 3, nullptr, &came_from);
-		//std::cout << '\n';
-		//std::cout << '\n';
-		//draw_grid(grid, 3, &cost_so_far, nullptr);
-		std::cout << '\n';
-		std::cout << '\n';
-		std::vector<GridLocation> path = reconstruct_path(start, goal, came_from);
-		draw_grid(grid, 3, nullptr, nullptr, &path);
-        printf("Time taken: %.4fs \n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-    }
-
-	std::cout <<  "The time it took: "<< cost_in_time << " sec." <<std::endl;
-    std::cout << "Position of bicycle: " << start.x << " " << start.y << std::endl;
+    
+    
 
     system("PAUSE");
     return 0;
