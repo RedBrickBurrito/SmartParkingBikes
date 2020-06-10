@@ -2,8 +2,6 @@
 
 ---------------Bicycle Parking Project for Smart City----------------
 
-USO
-
 Al iniciar el programa, se pide de input la posición de una bicicleta o plataforma para sacar.
 Se puede insertar un valor en X no menor a 0 ni mayor a 17, y un valor Y entre 0 y 14. Al escoger
 una posición en X igual o menor a 8, automáticamente se asume que se está usando la primera mitad de
